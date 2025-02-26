@@ -10,10 +10,11 @@ import java.util.Map;
 import java.util.Optional;
 
 public class JoinEvent extends Event {
-    private final String channel, type;
+    private final String user, channel, type;
 
     public JoinEvent(BaseEvent base) {
         super(base);
+        this.user = base.data()[0];
         this.type = base.data()[1];
         this.channel = base.data()[2];
     }
@@ -21,6 +22,10 @@ public class JoinEvent extends Event {
     @Override
     public String getType() {
         return type;
+    }
+
+    public String getUser() {
+        return user;
     }
 
     public String getChannel() {
