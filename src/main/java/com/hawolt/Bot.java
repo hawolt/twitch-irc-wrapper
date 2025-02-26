@@ -10,6 +10,7 @@ import com.hawolt.events.impl.JoinEvent;
 import com.hawolt.events.impl.MessageEvent;
 import com.hawolt.events.impl.UnknownEvent;
 import com.hawolt.logger.Logger;
+import com.sun.tools.javac.Main;
 
 import java.io.IOException;
 import java.net.Socket;
@@ -29,6 +30,8 @@ public class Bot implements Handler {
     private static final ExecutorService service = Executors.newCachedThreadPool();
     private static final Map<String, Function<BaseEvent, Event>> map = new HashMap<>() {{
         put("PRIVMSG", MessageEvent::new);
+        put("SELFJOIN", JoinEvent::new);
+        put("SELFPART", JoinEvent::new);
         put("JOIN", JoinEvent::new);
     }};
     private final Set<String> channels = new HashSet<>();
@@ -174,22 +177,26 @@ public class Bot implements Handler {
                 try {
                     BaseEvent base = new BaseEvent(this, data);
                     Event event = map.getOrDefault(type, UnknownEvent::new).apply(base);
-                    Optional.ofNullable(handlers.get(event.getClass())).ifPresent(list -> {
-                        list.forEach(handler -> {
-                            service.execute(() -> {
-                                try {
-                                    handler.onEvent(cast(event));
-                                } catch (Exception e) {
-                                    Logger.error(e);
-                                }
-                            });
-                        });
-                    });
+                    dispatch(event);
                 } catch (Exception e) {
                     Logger.error(e);
                 }
             }
         }
+    }
+
+    private void dispatch(Event event) {
+        Optional.ofNullable(handlers.get(event.getClass())).ifPresent(list -> {
+            list.forEach(handler -> {
+                service.execute(() -> {
+                    try {
+                        handler.onEvent(cast(event));
+                    } catch (Exception e) {
+                        Logger.error(e);
+                    }
+                });
+            });
+        });
     }
 
     @SuppressWarnings("all")
@@ -250,6 +257,11 @@ public class Bot implements Handler {
         synchronized (lock) {
             this.channels.addAll(Arrays.asList(channels));
         }
+        for (String channel : channels) {
+            BaseEvent base = new BaseEvent(this, new String[]{"SELFJOIN", channel});
+            Event event = map.getOrDefault("SELFJOIN", UnknownEvent::new).apply(base);
+            dispatch(event);
+        }
     }
 
     // join a twitch channel
@@ -263,6 +275,9 @@ public class Bot implements Handler {
         synchronized (lock) {
             this.channels.add(channel);
         }
+        BaseEvent base = new BaseEvent(this, new String[]{"SELFJOIN", channel});
+        Event event = map.getOrDefault("SELFJOIN", UnknownEvent::new).apply(base);
+        dispatch(event);
     }
 
     // part a twitch channel
@@ -278,6 +293,11 @@ public class Bot implements Handler {
                 this.channels.remove(channel);
             }
         }
+        for (String channel : channels) {
+            BaseEvent base = new BaseEvent(this, new String[]{"SELFPART", channel});
+            Event event = map.getOrDefault("SELFPART", UnknownEvent::new).apply(base);
+            dispatch(event);
+        }
     }
 
     // part a twitch channel
@@ -291,6 +311,9 @@ public class Bot implements Handler {
         synchronized (lock) {
             this.channels.remove(channel);
         }
+        BaseEvent base = new BaseEvent(this, new String[]{"SELFPART", channel});
+        Event event = map.getOrDefault("SELFPART", UnknownEvent::new).apply(base);
+        dispatch(event);
     }
 
     // send a message to a twitch channel
