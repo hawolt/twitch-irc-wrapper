@@ -2,12 +2,6 @@ package com.hawolt.events.impl;
 
 import com.hawolt.events.BaseEvent;
 import com.hawolt.events.Event;
-import com.hawolt.user.UserMetadata;
-
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
 
 public class JoinEvent extends Event {
     private final String user, channel, type;

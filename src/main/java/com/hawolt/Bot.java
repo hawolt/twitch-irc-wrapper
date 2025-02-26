@@ -10,7 +10,6 @@ import com.hawolt.events.impl.JoinEvent;
 import com.hawolt.events.impl.MessageEvent;
 import com.hawolt.events.impl.UnknownEvent;
 import com.hawolt.logger.Logger;
-import com.sun.tools.javac.Main;
 
 import java.io.IOException;
 import java.net.Socket;
