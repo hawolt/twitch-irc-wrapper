@@ -9,6 +9,8 @@ import com.hawolt.events.EventHandler;
 import com.hawolt.events.impl.JoinEvent;
 import com.hawolt.events.impl.MessageEvent;
 import com.hawolt.events.impl.UnknownEvent;
+import com.hawolt.events.impl.synthetic.SelfJoinEvent;
+import com.hawolt.events.impl.synthetic.SelfPartEvent;
 import com.hawolt.logger.Logger;
 
 import java.io.IOException;
@@ -28,9 +30,9 @@ public class Bot implements Handler {
     private static final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     private static final ExecutorService service = Executors.newCachedThreadPool();
     private static final Map<String, Function<BaseEvent, Event>> map = new HashMap<>() {{
+        put("SELFJOIN", SelfJoinEvent::new);
+        put("SELFPART", SelfPartEvent::new);
         put("PRIVMSG", MessageEvent::new);
-        put("SELFJOIN", JoinEvent::new);
-        put("SELFPART", JoinEvent::new);
         put("JOIN", JoinEvent::new);
     }};
     private final Set<String> channels = new HashSet<>();
