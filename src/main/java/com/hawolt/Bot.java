@@ -6,6 +6,7 @@ import com.hawolt.data.Environment;
 import com.hawolt.events.BaseEvent;
 import com.hawolt.events.Event;
 import com.hawolt.events.EventHandler;
+import com.hawolt.events.impl.JoinEvent;
 import com.hawolt.events.impl.MessageEvent;
 import com.hawolt.events.impl.UnknownEvent;
 import com.hawolt.logger.Logger;
@@ -28,6 +29,7 @@ public class Bot implements Handler {
     private static final ExecutorService service = Executors.newCachedThreadPool();
     private static final Map<String, Function<BaseEvent, Event>> map = new HashMap<>() {{
         put("PRIVMSG", MessageEvent::new);
+        put("JOIN", JoinEvent::new);
     }};
     private final Set<String> channels = new HashSet<>();
     private long timestamp = System.currentTimeMillis();
@@ -172,6 +174,7 @@ public class Bot implements Handler {
                 try {
                     BaseEvent base = new BaseEvent(this, data);
                     Event event = map.getOrDefault(type, UnknownEvent::new).apply(base);
+                    Logger.info(event);
                     Optional.ofNullable(handlers.get(event.getClass())).ifPresent(list -> {
                         list.forEach(handler -> {
                             service.execute(() -> {

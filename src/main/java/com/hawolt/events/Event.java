@@ -2,6 +2,8 @@ package com.hawolt.events;
 
 import com.hawolt.Bot;
 
+import java.util.Arrays;
+
 public abstract class Event {
     protected final long timestamp = System.currentTimeMillis();
     protected final String[] data;
@@ -20,5 +22,13 @@ public abstract class Event {
 
     public long getTimestamp() {
         return timestamp;
+    }
+
+    @Override
+    public String toString() {
+        return "Event{" +
+                "timestamp=" + timestamp +
+                ", data=" + Arrays.toString(data) +
+                '}';
     }
 }
