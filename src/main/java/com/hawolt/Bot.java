@@ -174,7 +174,6 @@ public class Bot implements Handler {
                 try {
                     BaseEvent base = new BaseEvent(this, data);
                     Event event = map.getOrDefault(type, UnknownEvent::new).apply(base);
-                    Logger.info(event);
                     Optional.ofNullable(handlers.get(event.getClass())).ifPresent(list -> {
                         list.forEach(handler -> {
                             service.execute(() -> {
