@@ -30,8 +30,10 @@ public class Bot implements Handler {
     private static final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     private static final ExecutorService service = Executors.newCachedThreadPool();
     private static final Map<String, Function<BaseEvent, Event>> map = new HashMap<>() {{
+        // synthetic events
         put("SELFJOIN", SelfJoinEvent::new);
         put("SELFPART", SelfPartEvent::new);
+        // twitch events
         put("PRIVMSG", MessageEvent::new);
         put("JOIN", JoinEvent::new);
     }};
@@ -148,41 +150,46 @@ public class Bot implements Handler {
     @Override
     public void onInput(String line) {
         Logger.debug("[ws-in] {}", line);
-        if (line.startsWith("PING")) {
-            String message = line.split(" ", 2)[1];
-            try {
-                connection.sendRAW(
-                        String.join(
-                                " ",
-                                "PONG",
-                                message
-                        )
-                );
-            } catch (IOException e) {
-                System.err.println("Failed to send PONG");
-            }
-        } else {
-            boolean comesWithTags = line.startsWith("@");
-            String[] data = line.split(" ", comesWithTags ? 5 : 4);
-            if (data[1].equals("RECONNECT")) {
+        try {
+            if (line.startsWith("PING")) {
+                String message = line.split(" ", 2)[1];
                 try {
-                    connection.close();
+                    connection.sendRAW(
+                            String.join(
+                                    " ",
+                                    "PONG",
+                                    message
+                            )
+                    );
                 } catch (IOException e) {
-                    Logger.debug(e.getMessage());
+                    System.err.println("Failed to send PONG");
                 }
-            } else if (data[1].matches("\\d+")) {
-                Logger.debug("numeric {}", data[1]);
-                if (data[1].equals("001")) ready();
             } else {
-                String type = data[comesWithTags ? 2 : 1];
-                try {
-                    BaseEvent base = new BaseEvent(this, data);
-                    Event event = map.getOrDefault(type, UnknownEvent::new).apply(base);
-                    dispatch(event);
-                } catch (Exception e) {
-                    Logger.error(e);
+                boolean comesWithTags = line.startsWith("@");
+                String[] data = line.split(" ", comesWithTags ? 5 : 4);
+                if (data[1].equals("RECONNECT")) {
+                    try {
+                        connection.close();
+                    } catch (IOException e) {
+                        Logger.debug(e.getMessage());
+                    }
+                } else if (data[1].matches("\\d+")) {
+                    Logger.debug("numeric {}", data[1]);
+                    if (data[1].equals("001")) ready();
+                } else {
+                    String type = data[comesWithTags ? 2 : 1];
+                    try {
+                        BaseEvent base = new BaseEvent(this, data);
+                        Event event = map.getOrDefault(type, UnknownEvent::new).apply(base);
+                        dispatch(event);
+                    } catch (Exception e) {
+                        Logger.error(e);
+                    }
                 }
             }
+        } catch (Exception e) {
+            Logger.error(line);
+            Logger.error(e);
         }
     }
 
@@ -193,6 +200,7 @@ public class Bot implements Handler {
                     try {
                         handler.onEvent(cast(event));
                     } catch (Exception e) {
+                        Logger.error(event);
                         Logger.error(e);
                     }
                 });
