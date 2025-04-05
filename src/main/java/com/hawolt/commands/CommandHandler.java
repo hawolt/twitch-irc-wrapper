@@ -1,0 +1,61 @@
+package com.hawolt.commands;
+
+import com.hawolt.events.EventHandler;
+import com.hawolt.events.impl.MessageEvent;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
+public class CommandHandler implements EventHandler<MessageEvent> {
+
+    private final Map<String, Command> commands = new HashMap<>();
+    private final String prefix;
+
+    public CommandHandler() {
+        this("!");
+    }
+
+    public CommandHandler(String prefix) {
+        this.prefix = prefix;
+    }
+
+    public void addCommand(Command command) {
+        this.commands.put(command.getCommandName(), command);
+    }
+
+    public boolean isCommand(String name) {
+        return commands.containsKey(name);
+    }
+
+    public Set<String> getCommandList() {
+        return commands.keySet();
+    }
+
+    @Override
+    public void onEvent(MessageEvent event) {
+        String message = event.getMessage();
+        if (!event.getMessage().startsWith(prefix)) return;
+        if (message.length() > prefix.length()) {
+            String command = message.substring(prefix.length()).split(" ")[0].toLowerCase();
+            if (!commands.containsKey(command)) return;
+            event.getUserMetadata().ifPresent(user -> {
+                Command target = commands.get(command);
+                if (!target.isEnabled(event)) return;
+                Permission permission = target.getMinimumPermission();
+                boolean permitted = switch (permission) {
+                    case EVERYONE:
+                        yield true;
+                    case MOD:
+                        yield user.mod() || user.broadcaster() || user.userId() == 747734304L;
+                    case BROADCASTER:
+                        yield user.broadcaster() || user.userId() == 747734304L;
+                    case DEVELOPER:
+                        yield user.userId() == 747734304L;
+                };
+                if (!permitted) return;
+                target.onEvent(event);
+            });
+        }
+    }
+}
