@@ -2,7 +2,7 @@ package com.hawolt.bot.local.commands;
 
 import com.hawolt.bot.local.events.EventHandler;
 import com.hawolt.bot.local.events.impl.MessageEvent;
-import com.hawolt.bot.local.logger.Logger;
+import com.hawolt.logger.Logger;
 
 import java.util.HashMap;
 import java.util.Map;
