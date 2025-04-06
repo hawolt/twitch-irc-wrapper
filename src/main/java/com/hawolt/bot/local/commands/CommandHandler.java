@@ -43,7 +43,7 @@ public class CommandHandler implements EventHandler<MessageEvent> {
             event.getUserMetadata().ifPresent(user -> {
                 Command target = commands.get(command);
                 if (!target.isEnabled(event)) return;
-                Permission permission = target.getMinimumPermission();
+                Permission permission = target.getMinimumPermission(event);
                 boolean permitted = switch (permission) {
                     case EVERYONE:
                         yield true;
