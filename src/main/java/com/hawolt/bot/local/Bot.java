@@ -24,7 +24,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-public class Bot implements Handler {
+public class Bot implements Handler, Presence {
 
     private static final Map<Class<? extends Event>, List<EventHandler<?>>> handlers = new HashMap<>();
     private static final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
@@ -255,7 +255,12 @@ public class Bot implements Handler {
         connection.sendRAW("CAP REQ :" + capability);
     }
 
+    public Presence getPresence() {
+        return this;
+    }
+
     // join one or multiple twitch channels
+    @Override
     public void join(String... channels) throws IOException {
         connection.sendRAW(
                 String.format(
@@ -274,6 +279,7 @@ public class Bot implements Handler {
     }
 
     // join a twitch channel
+    @Override
     public void join(String channel) throws IOException {
         connection.sendRAW(
                 String.format(
@@ -290,6 +296,7 @@ public class Bot implements Handler {
     }
 
     // part a twitch channel
+    @Override
     public void part(String... channels) throws IOException {
         connection.sendRAW(
                 String.format(
@@ -310,6 +317,7 @@ public class Bot implements Handler {
     }
 
     // part a twitch channel
+    @Override
     public void part(String channel) throws IOException {
         connection.sendRAW(
                 String.format(
