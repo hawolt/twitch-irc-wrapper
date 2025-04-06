@@ -9,8 +9,9 @@ import java.util.Set;
 
 public class CommandHandler implements EventHandler<MessageEvent> {
 
-    private final Map<String, Command> commands = new HashMap<>();
     private final String prefix;
+
+    protected final Map<String, Command> commands = new HashMap<>();
 
     public CommandHandler() {
         this("!");
