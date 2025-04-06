@@ -9,7 +9,7 @@ import java.util.Map;
 
 public abstract class Command implements EventHandler<MessageEvent> {
 
-    private final Map<String, Long> mapping = new HashMap<>();
+    private final Map<Long, Long> mapping = new HashMap<>();
     private final Object lock = new Object();
 
     public abstract Permission getMinimumPermission();
@@ -23,14 +23,16 @@ public abstract class Command implements EventHandler<MessageEvent> {
     @Override
     public void onEvent(MessageEvent event) {
         synchronized (lock) {
-            long lastCommandExecution = mapping.getOrDefault(event.getChannel(), 0L);
-            if (System.currentTimeMillis() - lastCommandExecution < getCooldownDurationInMillis()) return;
-            mapping.put(event.getChannel(), System.currentTimeMillis());
-            try {
-                execute(event);
-            } catch (Exception e) {
-                Logger.error(e);
-            }
+            event.getUserMetadata().ifPresent(metadata -> {
+                long lastCommandExecution = mapping.getOrDefault(metadata.room(), 0L);
+                if (System.currentTimeMillis() - lastCommandExecution < getCooldownDurationInMillis()) return;
+                mapping.put(metadata.room(), System.currentTimeMillis());
+                try {
+                    execute(event);
+                } catch (Exception e) {
+                    Logger.error(e);
+                }
+            });
         }
     }
 
