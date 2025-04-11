@@ -25,7 +25,11 @@ public abstract class Command implements EventHandler<MessageEvent> {
         synchronized (lock) {
             event.getUserMetadata().ifPresent(metadata -> {
                 long lastCommandExecution = mapping.getOrDefault(metadata.room(), 0L);
-                if (System.currentTimeMillis() - lastCommandExecution < getCooldownDurationInMillis(event)) return;
+                long cooldown = getCooldownDurationInMillis(event);
+                if (System.currentTimeMillis() - lastCommandExecution < cooldown) {
+                    Logger.debug("[command-handler] DENY [{}] : {}", event.getChannel(), cooldown);
+                    return;
+                }
                 mapping.put(metadata.room(), System.currentTimeMillis());
                 try {
                     execute(event);

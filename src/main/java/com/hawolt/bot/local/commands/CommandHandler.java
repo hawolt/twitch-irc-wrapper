@@ -6,12 +6,14 @@ import com.hawolt.bot.local.events.impl.MessageEvent;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public class CommandHandler implements EventHandler<MessageEvent> {
 
+    private final Map<String, Command> commands = new HashMap<>();
     private final String prefix;
 
-    protected final Map<String, Command> commands = new HashMap<>();
 
     public CommandHandler() {
         this("!");
@@ -31,6 +33,10 @@ public class CommandHandler implements EventHandler<MessageEvent> {
 
     public Set<String> getCommandList() {
         return commands.keySet();
+    }
+
+    public Map<String, Command> getCommandMap() {
+        return commands;
     }
 
     @Override
