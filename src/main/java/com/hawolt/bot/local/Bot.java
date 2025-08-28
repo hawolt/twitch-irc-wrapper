@@ -39,7 +39,6 @@ public class Bot implements Handler, Presence {
         put("JOIN", JoinEvent::new);
     }};
     private final Set<String> channels = new HashSet<>();
-    private long timestamp = System.currentTimeMillis();
     private final Object lock = new Object();
     private final Supplier<String[]> supplier;
     private final Capability[] capabilities;
@@ -48,11 +47,30 @@ public class Bot implements Handler, Presence {
     private Socket socket;
 
     private Bot(Environment environment, Supplier<String[]> supplier, Capability[] capabilities) {
+        this.setup();
         this.supplier = supplier;
         this.socket = getSocket();
         this.environment = environment;
         this.capabilities = capabilities;
         this.connection = Connection.connect(this);
+    }
+
+    private void setup() {
+        this.register(ConnectEvent.class, event -> {
+            synchronized (lock) {
+                Bot.this.channels.clear();
+            }
+        });
+        this.register(SelfJoinEvent.class, (EventHandler<SelfJoinEvent>) event -> {
+            synchronized (lock) {
+                Bot.this.channels.add(event.getChannel());
+            }
+        });
+        this.register(SelfPartEvent.class, (EventHandler<SelfPartEvent>) event -> {
+            synchronized (lock) {
+                Bot.this.channels.remove(event.getChannel());
+            }
+        });
     }
 
     public void shutdown() {
@@ -122,7 +140,7 @@ public class Bot implements Handler, Presence {
 
     public void ready() {
         long delayToJoin = 900L;
-        this.timestamp = System.currentTimeMillis();
+        long timestamp = System.currentTimeMillis();
         for (String channel : supplier.get()) {
             synchronized (lock) {
                 long current = System.currentTimeMillis();
@@ -139,7 +157,7 @@ public class Bot implements Handler, Presence {
                         throw new RuntimeException(e);
                     }
                 }, duration, TimeUnit.MILLISECONDS);
-                this.timestamp = current + duration;
+                timestamp = current + duration;
             }
         }
     }
@@ -276,9 +294,6 @@ public class Bot implements Handler, Presence {
                         String.join(",", channels)
                 )
         );
-        synchronized (lock) {
-            this.channels.addAll(Arrays.asList(channels));
-        }
         for (String channel : channels) {
             BaseEvent base = new BaseEvent(this, new String[]{"SELFJOIN", channel});
             Event event = map.getOrDefault("SELFJOIN", UnknownEvent::new).apply(base);
@@ -295,9 +310,6 @@ public class Bot implements Handler, Presence {
                         channel
                 )
         );
-        synchronized (lock) {
-            this.channels.add(channel);
-        }
         BaseEvent base = new BaseEvent(this, new String[]{"SELFJOIN", channel});
         Event event = map.getOrDefault("SELFJOIN", UnknownEvent::new).apply(base);
         dispatch(event);
@@ -312,11 +324,6 @@ public class Bot implements Handler, Presence {
                         String.join(",", channels)
                 )
         );
-        for (String channel : channels) {
-            synchronized (lock) {
-                this.channels.remove(channel);
-            }
-        }
         for (String channel : channels) {
             BaseEvent base = new BaseEvent(this, new String[]{"SELFPART", channel});
             Event event = map.getOrDefault("SELFPART", UnknownEvent::new).apply(base);
@@ -333,9 +340,6 @@ public class Bot implements Handler, Presence {
                         channel
                 )
         );
-        synchronized (lock) {
-            this.channels.remove(channel);
-        }
         BaseEvent base = new BaseEvent(this, new String[]{"SELFPART", channel});
         Event event = map.getOrDefault("SELFPART", UnknownEvent::new).apply(base);
         dispatch(event);
