@@ -9,6 +9,7 @@ import com.hawolt.bot.local.events.EventHandler;
 import com.hawolt.bot.local.events.impl.JoinEvent;
 import com.hawolt.bot.local.events.impl.MessageEvent;
 import com.hawolt.bot.local.events.impl.UnknownEvent;
+import com.hawolt.bot.local.events.impl.synthetic.ConnectEvent;
 import com.hawolt.bot.local.events.impl.synthetic.SelfJoinEvent;
 import com.hawolt.bot.local.events.impl.synthetic.SelfPartEvent;
 import com.hawolt.logger.Logger;
@@ -175,7 +176,14 @@ public class Bot implements Handler, Presence {
                     }
                 } else if (data[1].matches("\\d+")) {
                     Logger.debug("numeric {}", data[1]);
-                    if (data[1].equals("001")) ready();
+                    if (data[1].equals("001")) {
+                        ready();
+                        dispatch(
+                                new ConnectEvent(
+                                        new BaseEvent(this, new String[]{"connected"})
+                                )
+                        );
+                    }
                 } else {
                     String type = data[comesWithTags ? 2 : 1];
                     try {
