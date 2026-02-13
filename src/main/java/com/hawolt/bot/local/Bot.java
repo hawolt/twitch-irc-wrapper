@@ -12,6 +12,7 @@ import com.hawolt.bot.local.events.impl.UnknownEvent;
 import com.hawolt.bot.local.events.impl.synthetic.ConnectEvent;
 import com.hawolt.bot.local.events.impl.synthetic.SelfJoinEvent;
 import com.hawolt.bot.local.events.impl.synthetic.SelfPartEvent;
+import com.hawolt.bot.local.oauth.OAuth;
 import com.hawolt.logger.Logger;
 
 import java.io.IOException;
@@ -44,10 +45,12 @@ public class Bot implements Handler, Presence {
     private final Capability[] capabilities;
     private final Environment environment;
     private final Connection connection;
+    private final OAuth auth;
     private Socket socket;
 
-    private Bot(Environment environment, Supplier<String[]> supplier, Capability[] capabilities) {
+    private Bot(Environment environment, Supplier<String[]> supplier, OAuth auth, Capability[] capabilities) {
         this.setup();
+        this.auth = auth;
         this.supplier = supplier;
         this.socket = getSocket();
         this.environment = environment;
@@ -119,15 +122,24 @@ public class Bot implements Handler, Presence {
             Environment environment,
             Capability... capabilities
     ) throws IOException {
-        return connect(environment, () -> new String[0], capabilities);
+        return connect(environment, () -> new String[0], null, capabilities);
+    }
+
+    public static Bot connect(
+            Environment environment,
+            OAuth auth,
+            Capability... capabilities
+    ) throws IOException {
+        return connect(environment, () -> new String[0], auth, capabilities);
     }
 
     public static Bot connect(
             Environment environment,
             Supplier<String[]> supplier,
+            OAuth auth,
             Capability... capabilities
     ) throws IOException {
-        Bot bot = new Bot(environment, supplier, capabilities);
+        Bot bot = new Bot(environment, supplier, auth, capabilities);
         bot.login();
         return bot;
     }
@@ -164,6 +176,10 @@ public class Bot implements Handler, Presence {
 
     public Connection getConnection() {
         return connection;
+    }
+
+    public OAuth getOAuth() {
+        return auth;
     }
 
     @Override
