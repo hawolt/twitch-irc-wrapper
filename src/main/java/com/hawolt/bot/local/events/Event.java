@@ -14,7 +14,11 @@ public abstract class Event {
         this.bot = base.bot();
     }
 
-    public Bot getBot() {
+    public String[] data() {
+        return data;
+    }
+
+    public Bot bot() {
         return bot;
     }
 
