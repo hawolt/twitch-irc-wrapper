@@ -4,4 +4,6 @@ import java.io.IOException;
 
 public interface OAuth {
     String getAccessToken() throws IOException;
+
+    String getClientId();
 }
