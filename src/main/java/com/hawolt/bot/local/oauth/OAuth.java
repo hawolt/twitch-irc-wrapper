@@ -6,4 +6,8 @@ public interface OAuth {
     String getAccessToken() throws IOException;
 
     String getClientId();
+
+    String getLogin();
+
+    long getUserId();
 }
